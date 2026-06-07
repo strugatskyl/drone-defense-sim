@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Silent Architecture — Counter-FPV Layered Defense Simulations">
+<meta property="og:description" content="Interactive simulations of layered counter-FPV air defense: 3D acoustic detection, sensor fusion, and swarm saturation. Honest engineering, validated physics. By Leonid Strugatsky.">
+<meta property="og:url" content="https://strugatskyl.github.io/drone-defense-sim/">
+<meta property="og:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Silent Architecture — Counter-FPV Layered Defense Simulations">
+<meta name="twitter:description" content="3D acoustic detection, sensor fusion, swarm saturation. Validated physics, honest teardowns.">
+<meta name="twitter:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta name="author" content="Leonid Strugatsky">
+<meta name="description" content="Interactive simulations of layered counter-FPV air defense: 3D acoustic detection, sensor fusion, swarm saturation. By Leonid Strugatsky, Technion M.Sc.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silent Architecture — Counter-FPV Defense Simulations</title>
+<style>
+  :root{
+    --bg-deep:#0a1525;--bg-panel:#0f1d33;--ink-line:#1a2a44;--gold:#d4a64a;
+    --wind:#5ea8c2;--wind-glow:#7bc1d6;--warm:#c46a4f;--green:#8fcc8f;--red:#d46a6a;
+    --text-pale:#cbd2e0;--text-dim:#6d7891;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-deep);color:var(--text-pale);
+    font-family:'Geist Mono','JetBrains Mono','Consolas',monospace;font-size:14px;line-height:1.6;}
+  .wrap{max-width:960px;margin:0 auto;padding:48px 24px 64px;}
+  .kicker{color:var(--wind);font-size:12px;text-transform:uppercase;letter-spacing:.18em;}
+  h1{font-family:'Bricolage Grotesque',sans-serif;font-size:40px;font-weight:700;letter-spacing:.01em;margin:10px 0 8px;}
+  .lede{color:var(--text-dim);max-width:680px;font-size:15px;}
+  .lede b{color:var(--text-pale);font-weight:600;}
+  .rule{height:1px;background:var(--ink-line);margin:32px 0;}
+  .cards{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:760px){.cards{grid-template-columns:1fr 1fr;}}
+  .card{display:block;text-decoration:none;color:inherit;background:var(--bg-panel);
+    border:1px solid var(--ink-line);border-radius:6px;padding:20px;transition:border-color .15s,transform .15s;}
+  .card:hover{border-color:var(--gold);transform:translateY(-2px);}
+  .card.feature{grid-column:1/-1;border-color:rgba(212,166,74,.4);}
+  .card .tag{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);}
+  .card .tag.muted{color:var(--text-dim);}
+  .card h2{font-family:'Bricolage Grotesque',sans-serif;font-size:21px;margin:8px 0 6px;font-weight:700;}
+  .card p{color:var(--text-dim);font-size:13px;margin:0;}
+  .card .open{margin-top:12px;color:var(--wind-glow);font-size:12px;}
+  .note{margin-top:28px;padding:14px 16px;background:var(--bg-panel);border-left:2px solid var(--green);
+    font-size:12px;color:var(--text-dim);line-height:1.6;border-radius:0 4px 4px 0;}
+  footer{margin-top:40px;color:var(--text-dim);font-size:12px;border-top:1px solid var(--ink-line);padding-top:20px;}
+  footer b{color:var(--text-pale);}
+  .disc{margin-top:10px;font-size:11px;color:var(--text-dim);font-style:italic;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Silent Architecture</div>
+  <h1>Counter-FPV Layered Defense</h1>
+  <p class="lede">Interactive simulations exploring how to defend a fixed asset against fiber-optic and RF FPV drones — <b>not by reacting faster, but by hearing earlier.</b> Each tool is built on validated first-order physics and is honest about its own limits. They optimize defense; they give no advantage to an attacker.</p>
+
+  <div class="rule"></div>
+
+  <div class="cards">
+    <a class="card feature" href="layered.html">
+      <div class="tag">Showcase</div>
+      <h2>Layered Air Defense — Swarm · 3D Detection · Fusion</h2>
+      <p>A swarm of 1–20 drones against a layered defense. Switch sensors from a ground ring to a multi-altitude aerostat array, add thermal/EO fusion, and watch the leakers that hit the base disappear. The vertical baseline buys time; time closes the leak.</p>
+      <div class="open">Open simulator →</div>
+    </a>
+
+    <a class="card" href="killchain.html">
+      <div class="tag">Timeline</div>
+      <h2>Acoustic Kill-Chain</h2>
+      <p>From first acoustic contact to intercept. Which effector — shotgun, C-RAM, interceptor UAV, laser, Iron Dome — completes its kill chain before impact? Ground vs aerostat detection, real engagement timing, the speed of sound included.</p>
+      <div class="open">Open simulator →</div>
+    </a>
+
+    <a class="card" href="windwall.html">
+      <div class="tag muted">Tested &amp; set aside</div>
+      <h2>Terminal Wind-Wall</h2>
+      <p>A terminal air-curtain concept, stress-tested to destruction. The fiber survives the wind, the point-mass model can't resolve attitude upset, and the collateral is brutal. An honest teardown of why an idea doesn't make it — kept because the reasoning matters.</p>
+      <div class="open">Open simulator →</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <b style="color:var(--green)">On honesty:</b> these are timing and saturation tools, not probability-of-kill predictors. Detection ranges and service times are first-order estimates drawn from fielded systems (Zvook, Fraunhofer, Talon SECTR, published Iron Beam / Iron Dome figures). Where a model reaches its limit, it says so.
+  </div>
+
+  <footer>
+    <b>Leonid Strugatsky</b> · Biomedical &amp; systems engineer, M.Sc. Technion · Nahariya, Israel<br>
+    Companion to the article series on counter-FPV doctrine.
+    <div class="disc">Built for defenders. Open-concept doctrine, no proprietary mechanisms disclosed.</div>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Terminal Wind-Wall — Tested & Set Aside">
+<meta property="og:description" content="A terminal wind-wall counter-drone concept, rigorously stress-tested and set aside. An honest engineering teardown of why it does and doesn't work.">
+<meta property="og:url" content="https://strugatskyl.github.io/drone-defense-sim/windwall.html">
+<meta property="og:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Terminal Wind-Wall — Tested & Set Aside">
+<meta name="twitter:description" content="A terminal wind-wall counter-drone concept, rigorously stress-tested and set aside. An honest engineering teardown of why it does and doesn't work.">
+<meta name="twitter:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta name="author" content="Leonid Strugatsky">
+<meta name="description" content="A terminal wind-wall counter-drone concept, rigorously stress-tested and set aside. An honest engineering teardown of why it does and doesn't work.">
+
+<title>Terminal Disruption Simulator v0.3 — Breaking the Thread</title>
+<style>
+  :root{
+    --bg-deep:#0a1525;--bg-panel:#0f1d33;--ink-line:#1a2a44;--gold:#d4a64a;
+    --wind:#5ea8c2;--wind-glow:#7bc1d6;--warm:#c46a4f;--green:#8fcc8f;--red:#d46a6a;
+    --text-pale:#cbd2e0;--text-dim:#6d7891;--ground:#3c4762;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-deep);color:var(--text-pale);
+    font-family:'Geist Mono','JetBrains Mono','Consolas',monospace;font-size:13px;}
+  .header{padding:18px 28px 10px;border-bottom:1px solid var(--ink-line);}
+  .header h1{margin:0 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-size:23px;font-weight:700;letter-spacing:.02em;}
+  .header .sub{color:var(--text-dim);font-size:11px;font-style:italic;}
+  .header .meta{float:right;text-align:right;color:var(--text-dim);font-size:10px;margin-top:-30px;}
+  .main{display:grid;grid-template-columns:1fr 300px;gap:16px;padding:16px;}
+  .left{display:flex;flex-direction:column;gap:12px;}
+  .canvas-wrap{background:var(--bg-deep);border:1px solid var(--ink-line);border-radius:4px;padding:8px;}
+  canvas{display:block;width:100%;height:auto;}
+  .collateral{background:var(--bg-panel);border:1px solid var(--ink-line);border-radius:4px;padding:12px 14px;}
+  .collateral h3{margin:0 0 8px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);}
+  .col-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .col-cell{text-align:center;}
+  .col-cell .v{font-size:18px;font-weight:700;}
+  .col-cell .l{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--ink-line);border-radius:4px;padding:14px;height:fit-content;}
+  .panel h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);border-bottom:1px solid var(--ink-line);padding-bottom:6px;}
+  .ctrl{margin-bottom:11px;}
+  .ctrl label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+  .ctrl label .val{color:var(--gold);}
+  .ctrl input[type=range]{width:100%;accent-color:var(--gold);}
+  .toggle-row{display:flex;gap:8px;margin-bottom:12px;}
+  .toggle-btn{flex:1;background:var(--bg-deep);color:var(--text-dim);border:1px solid var(--ink-line);
+    padding:8px;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;text-align:center;}
+  .toggle-btn.active{border-color:var(--wind);color:var(--wind-glow);background:rgba(94,168,194,.08);}
+  .seg{display:flex;margin-bottom:12px;border:1px solid var(--ink-line);border-radius:3px;overflow:hidden;}
+  .seg button{flex:1;background:var(--bg-deep);color:var(--text-dim);border:none;border-right:1px solid var(--ink-line);
+    padding:7px 4px;font-family:inherit;font-size:10px;cursor:pointer;}
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:rgba(212,166,74,.12);color:var(--gold);}
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+  .btn-row.full{grid-template-columns:1fr;}
+  button.act{background:var(--bg-deep);color:var(--text-pale);border:1px solid var(--ink-line);
+    padding:8px 10px;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;}
+  button.act:hover{border-color:var(--gold);color:var(--gold);}
+  button.act.primary{background:var(--gold);color:var(--bg-deep);border-color:var(--gold);font-weight:600;}
+  .stat-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px dashed var(--ink-line);}
+  .stat-row .l{color:var(--text-dim);}
+  .stat-row .v.gold{color:var(--gold);}.stat-row .v.warm{color:var(--warm);}
+  .stat-row .v.wind{color:var(--wind-glow);}.stat-row .v.green{color:var(--green);}
+  .note{margin-top:14px;padding:10px;background:var(--bg-deep);border-left:2px solid var(--gold);
+    font-size:10px;color:var(--text-dim);line-height:1.5;}
+  .mc-compare{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .mc-box{background:var(--bg-deep);border:1px solid var(--ink-line);border-radius:3px;padding:8px;}
+  .mc-box .title{font-size:9px;text-transform:uppercase;color:var(--text-dim);letter-spacing:.08em;margin-bottom:6px;}
+  .mc-box .big{font-size:22px;font-weight:700;}
+  .mc-box .big.warm{color:var(--warm);}.mc-box .big.green{color:var(--green);}
+  .mc-box .small{font-size:9px;color:var(--text-dim);margin-top:3px;}
+  .delta{margin-top:8px;text-align:center;padding:8px;background:rgba(143,204,143,.08);border-radius:3px;}
+  .delta .num{font-size:20px;font-weight:700;color:var(--green);}
+  .delta .lbl{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;}
+  .footer{padding:8px 16px;color:var(--text-dim);font-size:10px;text-align:right;border-top:1px solid var(--ink-line);}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>TERMINAL DISRUPTION</h1>
+  <div class="sub">v0.3 · displacement-miss model · operator/AI recovery budget · honest envelope</div>
+  <div class="meta">L. STRUGATSKY · TECHNION M.SC.<br>NAHARIYA · MAY 2026<br>SILENT ARCHITECTURE / SIM</div>
+</div>
+
+<div class="main">
+  <div class="left">
+    <div class="canvas-wrap"><canvas id="sim" width="1000" height="480"></canvas></div>
+    <div class="collateral">
+      <h3>Collateral footprint (the wind-tunnel problem)</h3>
+      <div class="col-grid">
+        <div class="col-cell"><div class="v" id="c_perim" style="color:var(--red)">—</div><div class="l">perimeter gale</div></div>
+        <div class="col-cell"><div class="v" id="c_center" style="color:var(--green)">—</div><div class="l">at asset center</div></div>
+        <div class="col-cell"><div class="v" id="c_noise" style="color:var(--warm)">—</div><div class="l">est. noise</div></div>
+        <div class="col-cell"><div class="v" id="c_fod" style="color:var(--gold)">—</div><div class="l">FOD risk</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Defense</h3>
+    <div class="toggle-row">
+      <div class="toggle-btn" id="def-off">Wall OFF</div>
+      <div class="toggle-btn active" id="def-on">Wall ON</div>
+    </div>
+
+    <h3>Threat guidance</h3>
+    <div class="seg" id="guid-seg">
+      <button data-g="human" class="active">Human FPV</button>
+      <button data-g="ai">AI terminal</button>
+    </div>
+
+    <h3>Target type</h3>
+    <div class="seg" id="targ-seg">
+      <button data-t="1.5" class="active">Point 1.5m</button>
+      <button data-t="3">Hard 3m</button>
+      <button data-t="5">Area 5m</button>
+    </div>
+
+    <h3>Wall geometry</h3>
+    <div class="ctrl"><label>Ring radius <span class="val" id="radius_val">25 m</span></label>
+      <input type="range" id="radius" min="10" max="80" value="25" step="1"></div>
+    <div class="ctrl"><label>Disturbed-zone thickness <span class="val" id="wallw_val">8 m</span></label>
+      <input type="range" id="wallw" min="3" max="20" value="8" step="1"></div>
+    <div class="ctrl"><label>Fan exit velocity <span class="val" id="v_exit_val">35 m/s</span></label>
+      <input type="range" id="v_exit" min="15" max="55" value="35" step="1"></div>
+
+    <h3 style="margin-top:16px;">Threat (drone)</h3>
+    <div class="ctrl"><label>Drone mass <span class="val" id="m_drone_val">2.5 kg</span></label>
+      <input type="range" id="m_drone" min="1.0" max="5.0" value="2.5" step="0.1"></div>
+    <div class="ctrl"><label>Approach speed <span class="val" id="v_drone_val">14 m/s</span></label>
+      <input type="range" id="v_drone" min="11" max="33" value="14" step="1"></div>
+    <div class="ctrl"><label>Control authority <span class="val" id="ta_val">1.2 g</span></label>
+      <input type="range" id="ta" min="0.8" max="2.0" value="1.2" step="0.1"></div>
+
+    <div class="btn-row">
+      <button class="act primary" id="btn-run">▶ Run one</button>
+      <button class="act" id="btn-reset">Reset</button>
+    </div>
+    <div class="btn-row full"><button class="act" id="btn-mc">A/B Monte Carlo (200)</button></div>
+
+    <h3 style="margin-top:16px;">Live State</h3>
+    <div class="stat-row"><span class="l">Outcome</span><span class="v" id="s_out">— in flight —</span></div>
+    <div class="stat-row"><span class="l">Vertical kick</span><span class="v wind" id="s_kick">0 m/s</span></div>
+    <div class="stat-row"><span class="l">Reaction delay</span><span class="v" id="s_react">—</span></div>
+    <div class="stat-row"><span class="l">Miss distance</span><span class="v" id="s_miss">—</span></div>
+    <div class="stat-row"><span class="l">Time after wall</span><span class="v" id="s_tafter">—</span></div>
+
+    <div id="mc_panel" style="display:none;">
+      <h3 style="margin-top:16px;">A/B Results</h3>
+      <div class="mc-compare">
+        <div class="mc-box"><div class="title">Wall OFF</div><div class="big warm" id="mc_off">—</div><div class="small">strike success</div></div>
+        <div class="mc-box"><div class="title">Wall ON</div><div class="big green" id="mc_on">—</div><div class="small">strike success</div></div>
+      </div>
+      <div class="delta"><div class="num" id="mc_delta">—</div><div class="lbl">strikes defeated</div></div>
+    </div>
+
+    <div class="note">
+      <strong style="color:var(--gold);">Model:</strong> kill mechanism is terminal displacement, not fiber break (the payout bobbin is a tension limiter — wind can't snap the fiber, but the same decoupling lets the drone be shoved off course). Drone is displaced crossing the disturbed zone, then operator/AI recovers within the time-to-impact budget. Human reaction ≈0.45 s, AI ≈0.08 s.
+      <br><br><strong style="color:var(--red);">Limit of this model:</strong> point-mass, position only. It does NOT model attitude upset (pitch/roll tumble) — likely the real disruption mechanism. So it is optimistic for the attacker: fast drones "recover" here that a real quadrotor might not. Answering the fast-drone case honestly needs 6-DOF rigid-body sim or a bench test.
+    </div>
+  </div>
+</div>
+
+<div class="footer">Run Wall OFF first (baseline ~100% strike). Then ON. Then push approach speed up with a thin zone — watch fast drones punch through. Watch the collateral panel.</div>
+
+<script>
+'use strict';
+const RHO=1.225,G=9.81,CD=0.8,AREA=0.1,DT=0.005;
+const WORLD={xMin:-30,xMax:160,yMin:0,yMax:60};
+const canvas=document.getElementById('sim'),ctx=canvas.getContext('2d');
+const W=canvas.width,H=canvas.height;
+function w2sx(x){return (x-WORLD.xMin)/(WORLD.xMax-WORLD.xMin)*W;}
+function w2sy(y){return H-(y-WORLD.yMin)/(WORLD.yMax-WORLD.yMin)*H;}
+function w2sdx(d){return d/(WORLD.xMax-WORLD.xMin)*W;}
+function w2sdy(d){return d/(WORLD.yMax-WORLD.yMin)*H;}
+
+let state=null,running=false,wallOn=true,guidance='human',targetR=1.5;
+let mcRunning=false,mcPhase=null,mcIdx=0,mcOff=0,mcOn=0,mcTrials=100;
+
+function v(id){return document.getElementById(id).value;}
+function P(){return{radius:+v('radius'),wallW:+v('wallw'),vExit:+v('v_exit'),
+  mass:+v('m_drone'),vMag:+v('v_drone'),ta:+v('ta')};}
+
+// approach-side disturbed zone centered at x=radius, thickness wallW. Updraft decays with height.
+function windAt(x,y,p){
+  if(!wallOn||y<0)return 0;
+  if(Math.abs(x-p.radius)>p.wallW/2)return 0;
+  const Hd=25; return p.vExit/(1+y/Hd);
+}
+
+function initDrone(p,rand){
+  const target={x:0,y:8};
+  const y0=12+(rand?(Math.random()-0.5)*6:0);
+  const x0=WORLD.xMax-5;
+  const spd=p.vMag+(rand?(Math.random()-0.5)*3:0);
+  const dx0=target.x-x0,dy0=target.y-y0,dd=Math.hypot(dx0,dy0);
+  const tReact=(guidance==='human'?0.45:0.08)*(rand?(0.8+0.4*Math.random()):1);
+  return{x:x0,y:y0,vx:spd*dx0/dd,vy:spd*dy0/dd,mass:p.mass,
+    thrustX:0,thrustY:p.mass*G,windEntry:null,tReact,reacting:false,
+    aV:0,kick:0,peakKick:0,minDist:1e9,minDistY:8,trail:[],done:false,outcome:null,missDist:null,tAfter:null,xWall:p.radius};
+}
+function init(rand=false){const p=P();state={t:0,p,drone:initDrone(p,rand)};}
+
+function step(dt){
+  const s=state,d=s.drone,p=s.p;if(d.done)return;
+  const target={x:0,y:8};
+  const vWindUp=windAt(d.x,d.y,p);
+  const inZone=vWindUp>0.5;
+  if(inZone&&d.windEntry===null)d.windEntry=s.t;
+  d.reacting=(d.windEntry!==null)&&(s.t-d.windEntry>d.tReact);
+
+  const vVertRel=vWindUp-d.vy;
+  const FwyWind=0.5*RHO*vVertRel*Math.abs(vVertRel)*AREA*CD;
+  const vHorRel=-d.vx;
+  const FwxDrag=0.5*RHO*vHorRel*Math.abs(vHorRel)*AREA*CD;
+  d.kick=Math.abs(FwyWind/d.mass);
+  if(d.kick>d.peakKick)d.peakKick=d.kick;
+
+  let cmdTx=0,cmdTy=0;const aMax=p.ta*G;
+  {
+    const dx=target.x-d.x,dy=target.y-d.y,dist=Math.hypot(dx,dy);
+    const ux=dx/dist,uy=dy/dist,desSpd=p.vMag;
+    let aCx=3.0*(ux*desSpd-d.vx)-FwxDrag/d.mass;
+    let aCy=3.0*(uy*desSpd-d.vy)+G;
+    if(d.reacting)aCy-=FwyWind/d.mass; // only compensate wind after reacting
+    const aMag=Math.hypot(aCx,aCy);
+    if(aMag>aMax+G){const sc=(aMax+G)/aMag;aCx*=sc;aCy*=sc;}
+    cmdTx=d.mass*aCx;cmdTy=d.mass*aCy;
+  }
+  const tau=0.10,al=dt/(tau+dt);
+  d.thrustX+=al*(cmdTx-d.thrustX);d.thrustY+=al*(cmdTy-d.thrustY);
+  const Fx=FwxDrag+d.thrustX,Fy=FwyWind-d.mass*G+d.thrustY;
+  d.aV=Fy/d.mass;
+  d.vx+=Fx/d.mass*dt;d.vy+=d.aV*dt;d.x+=d.vx*dt;d.y+=d.vy*dt;
+
+  if(d.x<d.xWall&&d.tAfter===null)d.tAfter=s.t; // crossed wall toward target
+  const dist=Math.hypot(d.x-target.x,d.y-target.y);
+  if(dist<d.minDist){d.minDist=dist;d.minDistY=d.y;}
+
+  d.trail.push([d.x,d.y]);if(d.trail.length>900)d.trail.shift();
+
+  if(d.x<=0){ // reached target plane
+    d.done=true;d.missDist=Math.abs(d.y-target.y);
+    d.outcome=(d.missDist<targetR)?'hit':'deflected-miss';
+  } else if(d.y<=0.5){d.done=true;d.missDist=Math.abs(d.x);d.outcome='deflected-miss';}
+  else if(d.y>=WORLD.yMax-1){d.done=true;d.outcome='deflected-miss';d.missDist=99;}
+  else if(s.t>12){d.done=true;d.outcome='deflected-miss';}
+  s.t+=dt;
+}
+
+function render(){
+  ctx.fillStyle='#0a1525';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#1a2a44';ctx.lineWidth=.5;
+  for(let x=WORLD.xMin;x<=WORLD.xMax;x+=20){ctx.beginPath();ctx.moveTo(w2sx(x),0);ctx.lineTo(w2sx(x),H);ctx.stroke();}
+  for(let y=0;y<=WORLD.yMax;y+=10){ctx.beginPath();ctx.moveTo(0,w2sy(y));ctx.lineTo(W,w2sy(y));ctx.stroke();}
+  ctx.fillStyle='#6d7891';ctx.font='10px monospace';
+  for(let y=10;y<=50;y+=10)ctx.fillText(y+'m',4,w2sy(y)-2);
+  ctx.fillStyle='#3c4762';ctx.fillRect(0,w2sy(0),W,H-w2sy(0));
+  // disturbed zone
+  if(wallOn&&state){const p=state.p;
+    const x0=p.radius-p.wallW/2,x1=p.radius+p.wallW/2;
+    for(let i=0;i<40;i++){const h0=i/40*45,h1=(i+1)/40*45;
+      const vv=p.vExit/(1+((h0+h1)/2)/25);const a=Math.min(.4,vv/p.vExit*.5);
+      ctx.fillStyle='rgba(94,168,194,'+a+')';
+      ctx.fillRect(w2sx(x0),w2sy(h1),w2sdx(p.wallW),w2sy(h0)-w2sy(h1));}
+    ctx.fillStyle='#5ea8c2';ctx.font='9px monospace';ctx.textAlign='center';
+    ctx.fillText('disturbed zone',w2sx(p.radius),w2sy(0)+13);
+    ctx.fillText(p.wallW+'m @ '+p.vExit+'m/s',w2sx(p.radius),w2sy(0)+24);ctx.textAlign='left';
+  }
+  // target / asset
+  ctx.fillStyle='#52617e';[[-4,4,5],[2,3,4]].forEach(b=>ctx.fillRect(w2sx(b[0]),w2sy(b[2]),w2sdx(b[1]),w2sdy(b[2])));
+  // target tolerance band
+  ctx.strokeStyle='rgba(143,204,143,.5)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(w2sx(0),w2sy(8-targetR));ctx.lineTo(w2sx(8),w2sy(8-targetR));
+  ctx.moveTo(w2sx(0),w2sy(8+targetR));ctx.lineTo(w2sx(8),w2sy(8+targetR));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#8fcc8f';ctx.font='9px monospace';ctx.fillText('±'+targetR+'m',w2sx(9),w2sy(8));
+  // drone
+  if(state){const d=state.drone;
+    if(d.trail.length>1){
+      ctx.strokeStyle=d.outcome==='hit'?'rgba(196,106,79,.85)':'rgba(123,193,214,.7)';
+      ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(w2sx(d.trail[0][0]),w2sy(d.trail[0][1]));
+      for(let i=1;i<d.trail.length;i++)ctx.lineTo(w2sx(d.trail[i][0]),w2sy(d.trail[i][1]));ctx.stroke();}
+    if(!d.done){ctx.fillStyle=d.reacting?'#c46a4f':'#d46a6a';ctx.beginPath();ctx.arc(w2sx(d.x),w2sy(d.y),5,0,7);ctx.fill();
+      if(d.windEntry!==null&&!d.reacting){ctx.fillStyle='#d46a6a';ctx.font='9px monospace';ctx.fillText('!',w2sx(d.x)+7,w2sy(d.y)-6);}}
+    else if(d.outcome==='hit'){ctx.fillStyle='#c46a4f';ctx.beginPath();ctx.arc(w2sx(d.x),w2sy(d.y),7,0,7);ctx.fill();}
+    else{ctx.strokeStyle='#7bc1d6';ctx.lineWidth=1.5;const cx=w2sx(d.x),cy=w2sy(Math.max(d.y,1));
+      ctx.beginPath();ctx.moveTo(cx-6,cy-6);ctx.lineTo(cx+6,cy+6);ctx.moveTo(cx+6,cy-6);ctx.lineTo(cx-6,cy+6);ctx.stroke();}
+  }
+  ctx.fillStyle='#6d7891';ctx.font='10px monospace';
+  ctx.fillText('t='+(state?state.t.toFixed(2):'0')+'s · wall '+(wallOn?'ON':'OFF')+' · '+guidance+' · target ±'+targetR+'m',12,16);
+  if(state&&state.drone.done){const d=state.drone;
+    ctx.font='bold 13px monospace';ctx.textAlign='right';
+    ctx.fillStyle=d.outcome==='hit'?'#c46a4f':'#7bc1d6';
+    ctx.fillText(d.outcome==='hit'?'STRIKE — defense failed':'DEFLECTED — '+(d.missDist?d.missDist.toFixed(1):'?')+'m miss',W-12,20);ctx.textAlign='left';}
+}
+
+function updPanel(){
+  if(!state)return;const d=state.drone,p=state.p;
+  const o=document.getElementById('s_out');
+  if(d.outcome){o.textContent=d.outcome==='hit'?'STRIKE':'deflected-miss';
+    o.className='v '+(d.outcome==='hit'?'warm':'wind');}
+  else{o.textContent='— in flight —';o.className='v';}
+  document.getElementById('s_kick').textContent=d.peakKick.toFixed(1)+' m/s²';
+  document.getElementById('s_react').textContent=(d.tReact*1000).toFixed(0)+' ms';
+  document.getElementById('s_miss').textContent=d.missDist!=null?d.missDist.toFixed(1)+' m':'—';
+  document.getElementById('s_tafter').textContent=(d.tAfter!=null)?((state.t-d.tAfter).toFixed(2)+' s'):'—';
+  // collateral
+  const perim=wallOn?p.vExit:0;
+  const sigGround=0.7;const center=wallOn?(p.vExit*Math.exp(-p.radius*p.radius/(2*sigGround*sigGround))):0;
+  document.getElementById('c_perim').textContent=perim.toFixed(0)+' m/s';
+  document.getElementById('c_center').textContent=center<0.1?'~0':center.toFixed(1)+' m/s';
+  const noise=wallOn?Math.min(125,85+p.vExit*0.9):0;
+  document.getElementById('c_noise').textContent=wallOn?('~'+noise.toFixed(0)+' dB'):'—';
+  document.getElementById('c_fod').textContent=!wallOn?'—':(p.vExit>=20?'HIGH':'mod');
+  document.getElementById('c_fod').style.color=(wallOn&&p.vExit>=20)?'var(--red)':'var(--gold)';
+}
+
+function loop(){if(!running)return;
+  for(let i=0;i<6;i++){step(DT);if(state.drone.done){running=false;break;}}
+  render();updPanel();
+  if(!running&&mcRunning){recordMC();nextMC();}
+  if(running)requestAnimationFrame(loop);}
+function startRun(){init(true);running=true;requestAnimationFrame(loop);}
+function reset(){running=false;init(false);render();updPanel();}
+
+function startMC(){mcRunning=true;mcPhase='off';mcIdx=0;mcOff=0;mcOn=0;mcTrials=100;
+  document.getElementById('mc_panel').style.display='block';
+  wallOn=false;syncToggle();nextMC();}
+function nextMC(){
+  if(mcPhase==='off'){if(mcIdx<mcTrials){mcIdx++;init(true);running=true;requestAnimationFrame(loop);}
+    else{mcPhase='on';mcIdx=0;wallOn=true;syncToggle();nextMC();}}
+  else if(mcPhase==='on'){if(mcIdx<mcTrials){mcIdx++;init(true);running=true;requestAnimationFrame(loop);}
+    else{mcRunning=false;mcPhase=null;finalizeMC();}}}
+function recordMC(){const o=state.drone.outcome;
+  if(mcPhase==='off'){if(o==='hit')mcOff++;document.getElementById('mc_off').textContent=(mcOff/Math.max(1,mcIdx)*100).toFixed(0)+'%';}
+  else{if(o==='hit')mcOn++;document.getElementById('mc_on').textContent=(mcOn/Math.max(1,mcIdx)*100).toFixed(0)+'%';}}
+function finalizeMC(){const off=mcOff/mcTrials*100,on=mcOn/mcTrials*100;
+  document.getElementById('mc_off').textContent=off.toFixed(0)+'%';
+  document.getElementById('mc_on').textContent=on.toFixed(0)+'%';
+  document.getElementById('mc_delta').textContent=(off>0?((off-on)/off*100):0).toFixed(0)+'%';
+  reset();}
+
+function syncToggle(){
+  document.getElementById('def-on').classList.toggle('active',wallOn);
+  document.getElementById('def-off').classList.toggle('active',!wallOn);}
+document.getElementById('def-on').onclick=()=>{wallOn=true;syncToggle();if(!running){init(false);render();updPanel();}};
+document.getElementById('def-off').onclick=()=>{wallOn=false;syncToggle();if(!running){init(false);render();updPanel();}};
+document.querySelectorAll('#guid-seg button').forEach(b=>b.onclick=()=>{guidance=b.dataset.g;
+  document.querySelectorAll('#guid-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  if(!running){init(false);render();updPanel();}});
+document.querySelectorAll('#targ-seg button').forEach(b=>b.onclick=()=>{targetR=+b.dataset.t;
+  document.querySelectorAll('#targ-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  if(!running){init(false);render();updPanel();}});
+[['radius',' m'],['wallw',' m'],['v_exit',' m/s'],['m_drone',' kg'],['v_drone',' m/s'],['ta',' g']].forEach(([id,u])=>{
+  const el=document.getElementById(id),vl=document.getElementById(id+'_val');
+  el.oninput=()=>{let val=el.value;if(id==='m_drone'||id==='ta')val=(+val).toFixed(1);
+    vl.textContent=val+u;if(!running){init(false);render();updPanel();}};});
+document.getElementById('btn-run').onclick=()=>{if(!running)startRun();};
+document.getElementById('btn-reset').onclick=reset;
+document.getElementById('btn-mc').onclick=()=>{if(!mcRunning)startMC();};
+init(false);render();updPanel();syncToggle();
+</script>
+</body>
+</html>

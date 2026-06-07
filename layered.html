@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Layered Air Defense — Swarm, 3D Detection, Fusion">
+<meta property="og:description" content="Swarm saturation vs layered counter-FPV defense. See how elevated 3D acoustic sensors and thermal/EO fusion close the gap that lets drones through.">
+<meta property="og:url" content="https://strugatskyl.github.io/drone-defense-sim/layered.html">
+<meta property="og:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Layered Air Defense — Swarm, 3D Detection, Fusion">
+<meta name="twitter:description" content="Swarm saturation vs layered counter-FPV defense. See how elevated 3D acoustic sensors and thermal/EO fusion close the gap that lets drones through.">
+<meta name="twitter:image" content="https://strugatskyl.github.io/drone-defense-sim/og-preview.png">
+<meta name="author" content="Leonid Strugatsky">
+<meta name="description" content="Swarm saturation vs layered counter-FPV defense. See how elevated 3D acoustic sensors and thermal/EO fusion close the gap that lets drones through.">
+
+<title>Layered Air Defense Simulator — 3D Detection · Swarm · Fusion</title>
+<style>
+  :root{
+    --bg-deep:#0a1525;--bg-panel:#0f1d33;--ink-line:#1a2a44;--gold:#d4a64a;
+    --wind:#5ea8c2;--wind-glow:#7bc1d6;--warm:#c46a4f;--green:#8fcc8f;--red:#d46a6a;
+    --text-pale:#cbd2e0;--text-dim:#6d7891;--ground:#3c4762;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg-deep);color:var(--text-pale);font-family:'Geist Mono','JetBrains Mono','Consolas',monospace;font-size:13px;}
+  .header{padding:18px 28px 10px;border-bottom:1px solid var(--ink-line);}
+  .header h1{margin:0 0 4px;font-family:'Bricolage Grotesque',sans-serif;font-size:23px;font-weight:700;letter-spacing:.02em;}
+  .header .sub{color:var(--text-dim);font-size:11px;font-style:italic;}
+  .header .meta{float:right;text-align:right;color:var(--text-dim);font-size:10px;margin-top:-30px;}
+  .main{display:grid;grid-template-columns:1fr 320px;gap:16px;padding:16px;}
+  .left{display:flex;flex-direction:column;gap:12px;}
+  .canvas-wrap{background:var(--bg-deep);border:1px solid var(--ink-line);border-radius:4px;padding:8px;}
+  .canvas-wrap .cap{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin:2px 0 4px 4px;}
+  canvas{display:block;width:100%;height:auto;}
+  .row2{display:grid;grid-template-columns:1.6fr 1fr;gap:12px;}
+  .panel{background:var(--bg-panel);border:1px solid var(--ink-line);border-radius:4px;padding:14px;height:fit-content;}
+  .panel h3{margin:0 0 10px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);border-bottom:1px solid var(--ink-line);padding-bottom:6px;}
+  .seg{display:flex;margin-bottom:12px;border:1px solid var(--ink-line);border-radius:3px;overflow:hidden;}
+  .seg button{flex:1;background:var(--bg-deep);color:var(--text-dim);border:none;border-right:1px solid var(--ink-line);padding:8px 3px;font-family:inherit;font-size:10px;cursor:pointer;}
+  .seg button:last-child{border-right:none;}
+  .seg button.active{background:rgba(94,168,194,.12);color:var(--wind-glow);}
+  .toggle-row{display:flex;gap:8px;margin-bottom:12px;}
+  .toggle-btn{flex:1;background:var(--bg-deep);color:var(--text-dim);border:1px solid var(--ink-line);padding:8px;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;text-align:center;}
+  .toggle-btn.active{border-color:var(--green);color:var(--green);background:rgba(143,204,143,.08);}
+  .ctrl{margin-bottom:11px;}
+  .ctrl label{display:flex;justify-content:space-between;font-size:11px;color:var(--text-dim);margin-bottom:4px;}
+  .ctrl label .val{color:var(--gold);}
+  .ctrl input[type=range]{width:100%;accent-color:var(--gold);}
+  .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;}
+  button.act{background:var(--bg-deep);color:var(--text-pale);border:1px solid var(--ink-line);padding:8px;font-family:inherit;font-size:11px;cursor:pointer;border-radius:3px;}
+  button.act:hover{border-color:var(--gold);color:var(--gold);}
+  button.act.primary{background:var(--gold);color:var(--bg-deep);border-color:var(--gold);font-weight:600;}
+  .wrow{display:grid;grid-template-columns:120px 1fr 44px;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--ink-line);font-size:11px;}
+  .wrow .nm{} .wrow .bar{height:10px;background:var(--bg-deep);border:1px solid var(--ink-line);border-radius:2px;overflow:hidden;}
+  .wrow .bar .f{height:100%;background:linear-gradient(90deg,var(--wind),var(--green));}
+  .wrow .ct{text-align:right;color:var(--text-dim);}
+  .verdict{margin-top:10px;padding:10px;border-radius:3px;text-align:center;}
+  .verdict.win{background:rgba(143,204,143,.12);} .verdict.lose{background:rgba(212,106,106,.12);}
+  .verdict .big{font-size:24px;font-weight:700;} .verdict .lbl{font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;}
+  .stat-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px dashed var(--ink-line);}
+  .stat-row .l{color:var(--text-dim);} .stat-row .v.gold{color:var(--gold);}
+  .note{margin-top:14px;padding:10px;background:var(--bg-deep);border-left:2px solid var(--gold);font-size:10px;color:var(--text-dim);line-height:1.5;}
+  .footer{padding:8px 16px;color:var(--text-dim);font-size:10px;text-align:right;border-top:1px solid var(--ink-line);}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>LAYERED AIR DEFENSE</h1>
+  <div class="sub">3D acoustic detection · sensor fusion cue · swarm saturation · who leaks through</div>
+  <div class="meta">L. STRUGATSKY · TECHNION M.SC.<br>NAHARIYA · MAY 2026<br>SILENT ARCHITECTURE / SIM</div>
+</div>
+
+<div class="main">
+  <div class="left">
+    <div class="canvas-wrap"><div class="cap">Plan view — top-down</div><canvas id="plan" width="1000" height="430"></canvas></div>
+    <div class="row2">
+      <div class="canvas-wrap"><div class="cap">Side view — 3D detection geometry (altitude × range)</div><canvas id="side" width="600" height="220"></canvas></div>
+      <div class="panel" style="padding:12px 14px;">
+        <h3>Engagement result</h3>
+        <div id="wlist"></div>
+        <div class="verdict" id="verdict"><div class="big" id="v_big">—</div><div class="lbl" id="v_lbl">run engagement</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Sensor configuration</h3>
+    <div class="seg" id="sensor-seg">
+      <button data-s="ground" class="active">Ground ring</button>
+      <button data-s="aero1">Aerostat ×1</button>
+      <button data-s="aero3d">Aerostat 3D</button>
+    </div>
+    <h3>Fusion cue</h3>
+    <div class="toggle-row">
+      <div class="toggle-btn" id="fus-off">Acoustic only</div>
+      <div class="toggle-btn active" id="fus-on">+ Thermal/EO</div>
+    </div>
+
+    <h3>Threat</h3>
+    <div class="ctrl"><label>Swarm size <span class="val" id="swarm_val">12 drones</span></label>
+      <input type="range" id="swarm" min="1" max="20" value="12" step="1"></div>
+    <div class="ctrl"><label>Drone speed <span class="val" id="v_drone_val">79 km/h</span></label>
+      <input type="range" id="v_drone" min="40" max="130" value="79" step="1"></div>
+    <div class="ctrl"><label>Drone loudness <span class="val" id="loud_val">1.0×</span></label>
+      <input type="range" id="loud" min="0.5" max="1.5" value="1.0" step="0.05"></div>
+    <div class="ctrl"><label>Defended radius <span class="val" id="baseR_val">30 m</span></label>
+      <input type="range" id="baseR" min="10" max="200" value="30" step="5"></div>
+
+    <div class="btn-row">
+      <button class="act primary" id="btn-run">▶ Run attack</button>
+      <button class="act" id="btn-reset">Reset</button>
+    </div>
+
+    <h3 style="margin-top:16px;">Detection</h3>
+    <div class="stat-row"><span class="l">Detection range</span><span class="v gold" id="s_rdet">—</span></div>
+    <div class="stat-row"><span class="l">3D localization</span><span class="v" id="s_loc">—</span></div>
+    <div class="stat-row"><span class="l">Time available</span><span class="v gold" id="s_tavail">—</span></div>
+
+    <div class="note">
+      <strong style="color:var(--gold);">The chain:</strong> multi-altitude acoustic sensors give a vertical baseline → 3D corridor (bearing + elevation + range + velocity). The corridor cues a narrow-FOV thermal/EO head onto the exact patch of sky, handing a precise track to the effector — faster cue, higher hit quality. Iron Dome stays below its ~4 km minimum (excluded). Workhorses are the interceptor UAV (parallel tubes) and the C-RAM gun; both need the <em>time</em> that elevation buys. Watch leakers appear when detection is late (ground) and the swarm is large or fast.
+      <br><br>Ranges/channels modeled from fielded systems (Zvook, Fraunhofer, Talon SECTR, published Iron Beam/Iron Dome figures). Service times and Pk are first-order — this is a timing/saturation tool, not a Pk predictor.
+    </div>
+  </div>
+</div>
+<div class="footer">Set Ground + swarm 20 + fast → watch leakers hit the base. Switch to Aerostat 3D + fusion → watch the leak close. That delta is the architecture's value.</div>
+
+<script>
+'use strict';
+const planC=document.getElementById('plan'),pctx=planC.getContext('2d');
+const sideC=document.getElementById('side'),sctx=sideC.getContext('2d');
+const PW=planC.width,PH=planC.height,pcx=PW*0.5,pcy=PH*0.55;
+const SW=sideC.width,SH=sideC.height;
+const C0=343;
+
+const WEAPONS=[
+  {key:'intercept',name:'Interceptor UAV',launchInt:0.7,vInt:38,type:'pursuer',maxR:1500,minR:0,tCue:2.0,col:'#7bc1d6'},
+  {key:'cram',     name:'C-RAM gun',      ch:1,svc:1.2,type:'kinetic',vProj:1000,maxR:1500,minR:0,tCue:2.5,col:'#d4a64a'},
+  {key:'laser',    name:'Iron Beam',      ch:1,svc:5.0,type:'laser',dwell:4.0,maxR:7000,minR:0,tCue:0.5,col:'#8fcc8f'},
+  {key:'shotgun',  name:'Shotgun',        ch:2,svc:2.0,type:'kinetic',vProj:400,maxR:50,minR:0,tCue:1.5,col:'#c46a4f'},
+];
+const SENSOR_BASE={ground:250,aero1:700,aero3d:900};
+const SENSOR_LABEL={ground:'ground ring',aero1:'aerostat ×1',aero3d:'aerostat 3D array'};
+
+let sensor='ground',fusion=true,running=false,anim=null,scen=null;
+function v(id){return +document.getElementById(id).value;}
+function soundSpeed(t){return 331.3*Math.sqrt(1+t/273.15);}
+
+// assign each drone to a weapon (layered, greedy), compute killTime & killRange per drone
+function planEngagement(){
+  const baseR=v('baseR'),V=v('v_drone')/3.6,loud=v('loud'),M=v('swarm');
+  const C=C0; const Rd=SENSOR_BASE[sensor]*loud*(fusion&&sensor!=='ground'?1.0:1.0);
+  const Rnow=Rd*(1-V/C);
+  const T=(Rnow-baseR)/V;
+  // drones spread along frontal arc
+  const drones=[];
+  for(let i=0;i<M;i++){
+    const ang=(M===1?0:(-1+2*i/(M-1)))*0.55; // +-31 deg
+    drones.push({ang,killTime:null,killRange:null,weapon:null,leaked:false});
+  }
+  const order=['intercept','cram','laser','shotgun'];
+  let idx=0; // next unassigned drone
+  for(const key of order){
+    const w=WEAPONS.find(x=>x.key===key);
+    const tReady=(w.tCue*(fusion?0.6:1.0))+1.0;
+    if(w.type==='pursuer'){
+      const li=w.launchInt*(fusion?0.8:1.0); let n=0;
+      while(idx<M){
+        const tLaunch=tReady+n*li; const Rl=Rnow-V*tLaunch;
+        if(Rl<=baseR){break;}
+        const tFly=Rl/(w.vInt+V); const tKill=tLaunch+tFly; const Rint=Rl-V*tFly;
+        if(tKill<T&&Rint>baseR&&Rl<w.maxR){drones[idx].killTime=tKill;drones[idx].killRange=Rint;drones[idx].weapon=w;idx++;n++;}
+        else break;
+      }
+    } else if(w.type==='missile'){ /* excluded */ }
+    else {
+      const svc=w.svc*(fusion?0.7:1.0); const freeAt=new Array(w.ch).fill(tReady);
+      while(idx<M){
+        let ci=0;for(let k=1;k<w.ch;k++)if(freeAt[k]<freeAt[ci])ci=k;
+        let tStart=freeAt[ci];
+        if(w.type==='kinetic'){tStart=Math.max(tStart,(Rnow-w.maxR)/V);}
+        const tKill=tStart+svc; const Rint=Rnow-V*tKill;
+        if(tKill<T&&Rint>baseR&&Rint<=w.maxR){drones[idx].killTime=tKill;drones[idx].killRange=Rint;drones[idx].weapon=w;freeAt[ci]=tKill;idx++;}
+        else break;
+      }
+    }
+    if(idx>=M)break;
+  }
+  for(let i=idx;i<M;i++)drones[i].leaked=true;
+  // per-weapon counts
+  const counts={}; WEAPONS.forEach(w=>counts[w.key]=0);
+  drones.forEach(d=>{if(d.weapon)counts[d.weapon.key]++;});
+  const killed=drones.filter(d=>!d.leaked).length, leaked=M-killed;
+  return {baseR,V,loud,C,Rd,Rnow,T,M,drones,counts,killed,leaked};
+}
+
+function fmt(){
+  const s=scen;
+  document.getElementById('s_rdet').textContent=s.Rd.toFixed(0)+' m ('+SENSOR_LABEL[sensor]+')';
+  document.getElementById('s_loc').textContent= sensor==='ground'?'bearing only (2D)':sensor==='aero1'?'bearing + range':'full 3D corridor';
+  document.getElementById('s_tavail').textContent=s.T.toFixed(1)+' s';
+}
+
+function renderWeapons(){
+  const s=scen,wl=document.getElementById('wlist');wl.innerHTML='';
+  WEAPONS.forEach(w=>{
+    const c=s.counts[w.key], pct=s.M>0?c/s.M*100:0;
+    const row=document.createElement('div');row.className='wrow';
+    row.innerHTML=`<div class="nm" style="color:${w.col}">${w.name}</div>`+
+      `<div class="bar"><div class="f" style="width:${pct}%;background:${w.col}"></div></div>`+
+      `<div class="ct">${c}</div>`;
+    wl.appendChild(row);
+  });
+  const ve=document.getElementById('verdict'),vb=document.getElementById('v_big'),vl=document.getElementById('v_lbl');
+  vb.textContent=s.leaked===0?'0':s.leaked;
+  if(s.leaked===0){ve.className='verdict win';vl.textContent='leakers — base safe ('+s.killed+'/'+s.M+' stopped)';vb.style.color='var(--green)';}
+  else{ve.className='verdict lose';vl.textContent='leakers HIT the base ('+s.killed+'/'+s.M+' stopped)';vb.style.color='var(--red)';}
+}
+
+function planScale(){return (Math.min(PW,PH)*0.46)/Math.max(scen.Rnow,80);}
+function renderPlan(t){
+  pctx.fillStyle='#0a1525';pctx.fillRect(0,0,PW,PH);
+  const sc=planScale();
+  pctx.strokeStyle='#1a2a44';pctx.lineWidth=.5;
+  for(let r=200;r<=scen.Rnow;r+=200){pctx.beginPath();pctx.arc(pcx,pcy,r*sc,0,7);pctx.stroke();
+    pctx.fillStyle='#46506a';pctx.font='9px monospace';pctx.fillText(r+'m',pcx+r*sc+2,pcy-2);}
+  // detection ring
+  pctx.strokeStyle='rgba(94,168,194,.5)';pctx.lineWidth=1.2;pctx.setLineDash([5,4]);
+  pctx.beginPath();pctx.arc(pcx,pcy,scen.Rd*sc,0,7);pctx.stroke();pctx.setLineDash([]);
+  pctx.fillStyle='#5ea8c2';pctx.font='10px monospace';pctx.fillText('detection '+scen.Rd.toFixed(0)+'m',pcx-40,pcy-scen.Rd*sc-6);
+  // defended
+  pctx.strokeStyle='rgba(212,106,106,.7)';pctx.lineWidth=1.4;pctx.beginPath();pctx.arc(pcx,pcy,scen.baseR*sc,0,7);pctx.stroke();
+  pctx.fillStyle='rgba(212,106,106,.08)';pctx.beginPath();pctx.arc(pcx,pcy,scen.baseR*sc,0,7);pctx.fill();
+  // sensors
+  if(sensor==='ground'){pctx.fillStyle='#5ea8c2';for(let i=0;i<12;i++){const a=i/12*7,rr=scen.baseR*sc+6;pctx.beginPath();pctx.arc(pcx+Math.cos(a)*rr,pcy+Math.sin(a)*rr,2,0,7);pctx.fill();}}
+  else{pctx.fillStyle='#5ea8c2';pctx.beginPath();pctx.ellipse(pcx,pcy-12,7,9,0,0,7);pctx.fill();}
+  pctx.fillStyle='#52617e';pctx.fillRect(pcx-4,pcy-4,8,8);
+  // drones approach from RIGHT side, arc around angle 0
+  scen.drones.forEach(d=>{
+    let r=scen.Rnow;
+    const killed=d.killTime!==null&&t!==undefined&&t>=d.killTime;
+    if(t!==undefined){ r=Math.max(d.leaked?0:(killed?d.killRange:scen.baseR), scen.Rnow-scen.V*t); if(killed)r=d.killRange; }
+    const dx=pcx+Math.cos(d.ang)*r*sc, dy=pcy+Math.sin(d.ang)*r*sc;
+    if(killed){pctx.strokeStyle=d.weapon.col;pctx.lineWidth=1.4;pctx.beginPath();
+      pctx.moveTo(dx-4,dy-4);pctx.lineTo(dx+4,dy+4);pctx.moveTo(dx+4,dy-4);pctx.lineTo(dx-4,dy+4);pctx.stroke();}
+    else{const reached=t!==undefined&&r<=scen.baseR+0.5&&d.leaked;
+      pctx.fillStyle=reached?'#d46a6a':'#c46a4f';pctx.beginPath();pctx.arc(dx,dy,4,0,7);pctx.fill();}
+  });
+  pctx.fillStyle='#6d7891';pctx.font='10px monospace';
+  pctx.fillText('t='+(t!==undefined?t.toFixed(2):'0.00')+'s · '+SENSOR_LABEL[sensor]+' · fusion '+(fusion?'ON':'off')+' · swarm '+scen.M+' @ '+(scen.V*3.6).toFixed(0)+'km/h',12,18);
+}
+
+function renderSide(){
+  sctx.fillStyle='#0a1525';sctx.fillRect(0,0,SW,SH);
+  const mL=34,mB=24; const rngMax=Math.max(scen.Rnow,300), altMax=200;
+  const x=r=>mL+(r/rngMax)*(SW-mL-10), y=a=>SH-mB-(a/altMax)*(SH-mB-12);
+  sctx.strokeStyle='#1a2a44';sctx.lineWidth=.5;
+  for(let a=0;a<=200;a+=50){sctx.beginPath();sctx.moveTo(mL,y(a));sctx.lineTo(SW-10,y(a));sctx.stroke();
+    sctx.fillStyle='#46506a';sctx.font='8px monospace';sctx.fillText(a+'m',2,y(a)+3);}
+  sctx.fillStyle='#3c4762';sctx.fillRect(mL,y(0),SW-mL-10,SH-mB-y(0)+0);
+  // sensors at altitudes
+  const heights= sensor==='ground'?[2]: sensor==='aero1'?[80]:[30,90,150];
+  heights.forEach(h=>{sctx.fillStyle='#5ea8c2';sctx.beginPath();sctx.arc(x(0)+4,y(h),3,0,7);sctx.fill();});
+  sctx.fillStyle='#5ea8c2';sctx.font='8px monospace';sctx.fillText(heights.length+' sensor'+(heights.length>1?'s':''),mL,12);
+  // drone incoming low, with localization corridor (cone) — wide for ground, narrow for 3D
+  const droneAlt=35, droneR=scen.Rnow*0.85;
+  const spread= sensor==='ground'?55: sensor==='aero1'?28:10; // elevation uncertainty (m) at drone
+  sctx.fillStyle='rgba(212,166,74,0.12)';
+  sctx.beginPath();sctx.moveTo(x(0)+4,y(heights[Math.floor(heights.length/2)]));
+  sctx.lineTo(x(droneR),y(droneAlt+spread));sctx.lineTo(x(droneR),y(Math.max(2,droneAlt-spread)));sctx.closePath();sctx.fill();
+  sctx.strokeStyle='rgba(212,166,74,0.5)';sctx.setLineDash([3,3]);sctx.beginPath();
+  sctx.moveTo(x(0)+4,y(heights[Math.floor(heights.length/2)]));sctx.lineTo(x(droneR),y(droneAlt));sctx.stroke();sctx.setLineDash([]);
+  // drone
+  sctx.fillStyle='#c46a4f';sctx.beginPath();sctx.arc(x(droneR),y(droneAlt),4,0,7);sctx.fill();
+  sctx.fillStyle='#d4a64a';sctx.font='9px monospace';
+  sctx.fillText('alt uncertainty ±'+spread+'m',x(droneR)-90,y(droneAlt)-10);
+  sctx.fillStyle='#6d7891';sctx.fillText(sensor==='aero3d'?'vertical baseline → tight 3D corridor':sensor==='aero1'?'single elevated → range, coarse alt':'ground → bearing only, no altitude',mL,SH-8);
+}
+
+function frame(){
+  if(!running)return;
+  const t=(performance.now()-anim.start)/1000*anim.speed;
+  if(t>=scen.T+1.0){running=false;renderPlan(scen.T+1.0);return;}
+  renderPlan(t);
+  requestAnimationFrame(frame);
+}
+function run(){scen=planEngagement();fmt();renderWeapons();renderSide();running=true;anim={start:performance.now(),speed:1.4};requestAnimationFrame(frame);}
+function reset(){running=false;scen=planEngagement();fmt();renderWeapons();renderPlan();renderSide();}
+
+document.querySelectorAll('#sensor-seg button').forEach(b=>b.onclick=()=>{sensor=b.dataset.s;
+  document.querySelectorAll('#sensor-seg button').forEach(x=>x.classList.remove('active'));b.classList.add('active');reset();});
+document.getElementById('fus-on').onclick=()=>{fusion=true;document.getElementById('fus-on').classList.add('active');document.getElementById('fus-off').classList.remove('active');reset();};
+document.getElementById('fus-off').onclick=()=>{fusion=false;document.getElementById('fus-off').classList.add('active');document.getElementById('fus-on').classList.remove('active');reset();};
+[['swarm',' drones'],['v_drone',' km/h'],['loud','×'],['baseR',' m']].forEach(([id,u])=>{
+  const el=document.getElementById(id),vl=document.getElementById(id+'_val');
+  el.oninput=()=>{let val=el.value;if(id==='loud')val=(+val).toFixed(2);vl.textContent=val+u;reset();};});
+document.getElementById('btn-run').onclick=()=>{if(!running)run();};
+document.getElementById('btn-reset').onclick=reset;
+reset();
+</script>
+</body>
+</html>

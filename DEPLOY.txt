@@ -1,0 +1,46 @@
+HOW TO PUBLISH ON GITHUB PAGES  (~3 minutes)
+=============================================
+
+1. github.com/new
+   - Repository name:  drone-defense-sim   (use exactly this; preview links depend on it)
+   - Visibility: Public
+   - Create repository
+
+2. On the repo page:  Add file  ->  Upload files
+   - Drag in ALL files from this folder (index.html, layered.html, killchain.html,
+     windwall.html, og-preview.png, README.md, DEPLOY.txt)
+   - Commit changes
+
+3. Settings  ->  Pages  (left sidebar)
+   - Source: "Deploy from a branch"
+   - Branch: main   Folder: / (root)
+   - Save
+
+4. Wait ~1 minute, refresh. Live at:
+   https://strugatskyl.github.io/drone-defense-sim/
+
+
+REPO "DESCRIPTION" FIELD (paste into the box on the repo page / About gear)
+---------------------------------------------------------------------------
+Interactive simulations of layered counter-FPV air defense — 3D acoustic detection, sensor fusion, swarm saturation. Validated physics, honest teardowns.
+
+ABOUT -> WEBSITE
+----------------
+https://strugatskyl.github.io/drone-defense-sim/
+
+ABOUT -> TOPICS (tags, space-separated)
+---------------------------------------
+counter-uas counter-drone drone-defense fpv acoustic-detection air-defense simulation sensor-fusion javascript
+
+
+IF YOU USE A DIFFERENT REPO NAME OR USERNAME
+--------------------------------------------
+The social-preview links are hard-coded to strugatskyl.github.io/drone-defense-sim.
+Open each .html, replace every occurrence of
+   https://strugatskyl.github.io/drone-defense-sim
+with your actual Pages URL. (Simulators still WORK without this; only the
+LinkedIn/Facebook preview card needs the correct URL.)
+
+TO SHOW ONLY WHAT WORKS
+-----------------------
+Don't upload windwall.html, and delete its <a class="card"> block from index.html.
