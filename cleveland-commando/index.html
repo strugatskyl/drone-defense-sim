@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#0b0e17;color:#fff}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#0b0e17;color:#fff}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Cleveland Commando 3D</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" type="image/png" href="icon-180.png">
@@ -1907,8 +1907,9 @@ addEventListener('keydown',e=>{ keys[e.code]=1; if(e.code==='Space'){jumpQueued=
   if(e.code==='KeyQ')camYaw+=0.12; if(e.code==='KeyE')camYaw-=0.12; if(e.code==='Enter'){ if(G.state==='start')startGame(); else if(G.state==='brief')$('go').click(); else if(G.state==='between'||G.state==='over')$('again').click(); }
   if(e.code.startsWith('Arrow'))e.preventDefault(); });
 addEventListener('keyup',e=>{ keys[e.code]=0; if(e.code==='KeyX'||e.code==='KeyK')fireHeld=false; });
-document.addEventListener('touchmove',e=>{if(G.state==='play')e.preventDefault();},{passive:false});
-document.addEventListener('gesturestart',e=>e.preventDefault()); document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('touchmove',e=>{if(G.state==='play'||e.touches.length>1||(e.scale!==undefined&&e.scale!==1))e.preventDefault();},{passive:false});
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+if(window.visualViewport){ let VPT=0; visualViewport.addEventListener('resize',()=>{ if(visualViewport.scale>1.02&&Date.now()-VPT>400){ VPT=Date.now(); const m=document.querySelector('meta[name=viewport]'); if(m){ const c=m.content; m.content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover'; setTimeout(()=>{ m.content=c; },60); } } }); } document.addEventListener('contextmenu',e=>e.preventDefault());
 
 // ---------- audio (synth) ----------
 let AC=null,muted=false;
